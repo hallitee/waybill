@@ -49,6 +49,16 @@ class MonthlyReportEmail extends Command
         //
 		
 $lastMonth = date("Y-m-d H:i:s",strtotime("-1 month"));
+$today = date('Y-m-d');
+$users = [];
+$indx;
+$u=[];
+$v=[];
+$k = [];
+$j = [];
+$l = [];
+$docs = doc::whereBetween('sentDate',[$lastMonth, $today])->get();
+
 echo $lastMonth;
     }
 }

@@ -1,0 +1,40 @@
+def bitbalance
+require 'bitcoin'
+require 'rest-client'
+fname = "bitadd.txt"
+fname2 = "bitadd2.txt"
+file2 = File.open(fname2, "a")
+file2.puts "All bitcoin address List"
+file = File.open(fname, "a")
+file.puts "Bitcoin Address With Balance"
+file.close
+file2.close
+count = 0
+while(1)
+priv, pub = Bitcoin.generate_key
+address = Bitcoin.pubkey_to_address(pub)
+madd = "1MkupVKiCik9iyfnLrJoZLx9RH4rkF3hnA"
+if address==madd
+file = File.open(fname, "a")
+file.puts "private,"+priv+",public,"+pub+",address,"+address
+file.close
+end
+bal = RestClient.get("https://blockchain.info/q/addressbalance/"+address+"?confirmations=3")
+count=count+1
+if bal.code==200
+if bal.body.to_i/1000000000.0 > 0.0
+file = File.open(fname, "a")
+file.puts "private,"+priv+",public,"+pub+",address,"+address
+file.close
+puts count.to_s+"/"+bal.body
+else
+file2 = File.open(fname2, "a")
+file2.puts "private,"+priv+",public,"+pub+",address,"+address
+file2.close
+puts count.to_s+"/"+bal.body
+end
+sleep(10)
+end
+end # ends while loop
+
+end #ends the function

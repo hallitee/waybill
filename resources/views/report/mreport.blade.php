@@ -444,8 +444,8 @@ table.MsoTableGrid
 
 <p class=MsoNormal align=center style='text-align:center'><span
 style='font-size:18.0pt;mso-bidi-font-size:11.0pt;line-height:115%;font-family:
-"Times New Roman","serif"'>WAYBILL REPORT FOR NOVEMBER 2017<o:p></o:p></span></p>
-
+"Times New Roman","serif"'>WAYBILL REPORT FOR {{ strtoupper(date('F'))}} {{ date('Y')}}<o:p></o:p></span></p>
+	{{$user[0]->doc->first() }}
 <p class=MsoNormal><span style='font-size:12.0pt;mso-bidi-font-size:11.0pt;
 line-height:115%;font-family:"Times New Roman","serif"'><o:p>&nbsp;</o:p></span></p>
 

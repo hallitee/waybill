@@ -26,8 +26,47 @@ use App\Jobs\SendDailyReport;
 */
 
 Route::get('waybill/globalreport', function(){
+$lastMonth = date("Y-m-d H:i:s",strtotime("-1 month"));
+$today = date('Y-m-d');
+$users = [];
+$user = [];
+$indx;
+$u=[];
+$v=[];
+$row = [];
+$col = [];
+$k = [];
+$j = [];
+$l = [];
+$docs = doc::whereBetween('sentDate',[$lastMonth, $today])->get();
+foreach($docs as $d){
+if(in_array($d->user_id, $users)){
+
+}
+else{
 	
-	return view('report.mreport');
+array_push($users, $d->user_id);
+$p = User::where('id', $d->user_id)->first();
+array_push($user, $p);
+}
+}
+$locs = ['ESRNL IKOYI', 'NPRNL IKOYI', 'PFNL IKOYI', 'ESRNL AGBARA', 'NPRNL AGBARA', 'PFNL AGBARA', 'EUROMEGA', 'PARKVIEW', 'AGBARA ESTATE', 'VENDOR']
+foreach($user as $m){
+for($x=0;$x<9;$x++){
+foreach($locs as $loc){
+	if($x==0){
+	$y = doc::where('sentBy', $m)->where('sentTo', 'LIKE', $loc)->whereBetween('sentDate', [$lastMonth, $today])->count();
+	}
+	if($x==1){
+	$y = doc::where('sentBy', $m)->whereBetween('sentDate', [$lastMonth, $today])->where('receiveStatus', 'CLOSED')->count();
+	}	
+		array_push($row, $y);
+}
+		array_push($col, $u)
+		$u = [];
+}
+}
+	return view('report.mreport')->with(['user'=>$user]);
 });
 Route::get('waybill/email', function(){
 $today = '2017-11-28';
