@@ -27,12 +27,14 @@ $(function() {
 	var $username = $("#username").val();
 	var $location = $("#userlocation").val();
 	var $company =  $("#usercompany").val();
+	var $userpriv =  $("#userpriv").val();	
 	var $lc = $company+" "+$location;
 	console.log("Username " + $username + "  User id: "+ $userid + " company "+ $company +" location: "+ $location);
 	var $item_stat = "";
 	var $item_err = 0;
 	var $doc_id;
 	var $ins;
+	var $itemsdata;
 	var $doc;
 	var $data;
 	var $loc, $wType;
@@ -138,7 +140,7 @@ if($(this).find(":selected").val()==='VENDOR'){
 	   $(this).prop('readonly', true);
 	  });
     $("#add_row").click(function(){
-      $('#addr'+i).html("<td class='text-center'>"+ (i+1) +"</td><td><input name='items["+i+"][desc]' type='text' placeholder='Item description' class='form-control input-md'  /> </td><td><input  name='items["+i+"][qty]'  type='number' onkeypress='return (event.charCode == 8 || event.charCode == 0) ? null : event.charCode >= 48 && event.charCode <= 57' type='number' min='0' max='1000' placeholder='Quantity'  class='form-control input-md'></td><td><input  name='items["+i+"][serial]' type='text' placeholder='Serial Number'  class='form-control input-md'></td><td><input  name='items["+i+"][status]' type='text' placeholder='Item Status'  class='form-control input-md'></td><td><input  name='items["+i+"][remark]' type='text' placeholder='Remarks'  class='form-control input-md'></td><td><input  name='items["+i+"][sircode]' type='text' placeholder='SIR Number'  class='form-control input-md'></td><td><input  name='items["+i+"][lpo]' type='text' placeholder='LPO Number'  class='form-control input-md'></td>");
+      $('#addr'+i).html("<td class='text-center'>"+ (i+1) +"</td><td><input name='items["+i+"][desc]' type='text' placeholder='Item description' class='form-control input-md'  /> </td><td><input  name='items["+i+"][qty]'  type='number' onkeypress='return (event.charCode == 8 || event.charCode == 0) ? null : event.charCode >= 48 && event.charCode <= 57' type='number' min='0' max='10000' placeholder='Quantity'  class='form-control input-md'></td><td><input  name='items["+i+"][serial]' type='text' placeholder='Serial Number'  class='form-control input-md'></td><td><input  name='items["+i+"][status]' type='text' placeholder='Item Status'  class='form-control input-md'></td><td><input  name='items["+i+"][remark]' type='text' placeholder='Remarks'  class='form-control input-md'></td><td><input  name='items["+i+"][sircode]' type='text' placeholder='SIR Number'  class='form-control input-md'></td><td><input  name='items["+i+"][lpo]' type='text' placeholder='LPO Number'  class='form-control input-md'></td>");
 
 	$('#tbody').append('<tr id="addr'+(i+1)+'"></tr>');      i++; 
 	$('#row_value').val(i);
@@ -210,7 +212,8 @@ if($(this).find(":selected").val()==='VENDOR'){
 				});					
 				
 				
-		}else{
+		}
+		else{
 			
 				$("#thead1").show();
 				$("#thead2").hide();
@@ -277,7 +280,7 @@ if($(this).find(":selected").val()==='VENDOR'){
 					//$("#tbody1 > tr > td").empty();	
 					$.each(data, function(i, item){
 
-						console.log(" items "+ item.item_desc);
+						//console.log(" items "+ item.item_desc);
 						//rec_qty[i] = item.recqty;
 					$('#trows'+i).html("<td>"+(i+1)+"</td><td>"+item.item_desc+"</td><td> "+item.serialNo+"</td><td>"+item.qty+"</td><td>"+item.recqty+"</td><td>"+(item.qty-item.recqty)+"</td><td>"+item.status +"</td><td>"+item.remark+"</td><td>"+item.sircode+"</td><td>"+item.lpo+"</td>");
 					
@@ -303,7 +306,7 @@ if($(this).find(":selected").val()==='VENDOR'){
 //				console.log("Items button clicked");
 				$userid = $("#userid").val();
 				$doc_id = $(this).val();
-				$.ajax({
+				$.ajax({  //load waybill document
 					type: 'GET',
 					url: "/waybill/loaddoc",
 					dataType: 'JSON',
@@ -323,7 +326,7 @@ if($(this).find(":selected").val()==='VENDOR'){
 				
 				});
 
-				$.ajax({
+				$.ajax({ //load waybill item 
 					type: 'GET',
 					url: "/waybill/loadItems",
 					dataType: 'JSON',
@@ -340,19 +343,30 @@ if($(this).find(":selected").val()==='VENDOR'){
 					$item_err = 0; 
 					$item_count=0;
 					rec_qty = [];
+					$itemsdata = data;
+					console.log($itemsdata);					
 					$("#tbody1 > tr > td").remove();	
 					$.each(data, function(i, item){
 						if(item.recqty===item.qty){
 							$rd = "readonly";
-						}else if($doc.ackcnt>9){$rd="readonly"}
+						}
+						else if($doc.ackcnt>9){$rd="readonly"}
+						else if(($doc.wType == 'LOAN') && ($doc.receiveStatus == 'RECEIVED') && ($username == $doc.deliveredTo)){	$rd = '';}
 						else{$rd = "";}
 //						console.log(i);
 						rec_qty[i] = item.recqty;
-			if($doc.receiveStatus=='CLOSED' || $doc.receiveStatus=='RECEIVED' || $doc.receiveStatus == 'RETURNED')	{
+			if($doc.receiveStatus=='CLOSED')	{
 					$rd = 'readonly';
 					$("#recheader").text("Received Quantity");
 					$ins="<td><input  name='item["+i+"][recqty]' onkeypress='return (event.charCode == 8 || event.charCode == 0) ? null : event.charCode >= 48 && event.charCode <= 57' type='number' min='0' max='1000' placeholder='qty' value='"+item.recqty+"' class='form-control input-md' required "+$rd+"></td>";
-				}else{
+				}
+				else if($doc.wType == 'LOAN' && $doc.receiveStatus == 'RECEIVED' && $username == $doc.deliveredTo){
+					$rd = '';
+					$("#recheader").text("Return Quantity");
+					$ins="<td><input  name='item["+i+"][recqty]' onkeypress='return (event.charCode == 8 || event.charCode == 0) ? null : event.charCode >= 48 && event.charCode <= 57' type='number' min='0' max='10000' placeholder='qty' value='"+item.recqty+"' class='form-control input-md' required "+$rd+"></td>";				
+					
+				}
+				else{
 					$rd="";
 					$("#recheader").text("Receiving Quantity");
 					$ins="<td><input  name='item["+i+"][recqty]' onkeypress='return (event.charCode == 8 || event.charCode == 0) ? null : event.charCode >= 48 && event.charCode <= 57' type='number' min='0' max='1000' placeholder='qty' value='0' class='form-control input-md' required "+$rd+"></td>";
@@ -391,8 +405,7 @@ if($(this).find(":selected").val()==='VENDOR'){
 					$("#rec_suc").text("");
 					if($doc.wType=='LOAN'){
 						
-						if($doc.ackcnt>9){
-
+					if($doc.ackcnt>9){
 					$("#rec_btn1").hide();
 					$("#rec_btn2").show();
 					$("#printText").show();
@@ -403,8 +416,7 @@ if($(this).find(":selected").val()==='VENDOR'){
 					$("#rec_btn2").hide();							
 					$("#printText").hide();
 					$("#printType").hide();							
-					}
-				
+					}				
 						}else{
 					$("#rec_btn1").show();
 					$("#rec_btn2").hide();							
@@ -436,6 +448,8 @@ if($(this).find(":selected").val()==='VENDOR'){
 					//console.log("SUCCESS, data="+data);
 					}
 				});
+				console.log(" Items count " + $item_count);
+				//console.log(' items data '+ $itemsdata);
 				
 	});
 $("body").on("click",'.btn_itemshow', function(){
@@ -561,8 +575,9 @@ $("body").on("click",'.btn_itemshow', function(){
 	$("body").on("click",'#rec_btn1', function(){ 
 	
 		loaddoc();
-
-		if($doc.sentTo == $lc){    //if waybill sent To location same as receiver location
+		console.log('$lc  = '+$lc);
+		console.log(' Waybill SentTo ' +$doc.sentTo);
+		if($doc.sentTo == $lc ){    //if waybill sent To location same as receiver location
 		//$("#rec_err").hide();
 		$("#recRemarks").css('diplay','none');
 		$("#rec_err").text("");			
@@ -612,7 +627,8 @@ $("body").on("click",'.btn_itemshow', function(){
 				$("#rec_err").text("");
 				recLoan();
 		}
-	}	else{
+	}
+	else{
 		$("#recRemarks").show();}	 
 		}
 		else if($item_err<0){
@@ -621,7 +637,70 @@ $("body").on("click",'.btn_itemshow', function(){
 		} 
 //		console.log("receive button clicked "+$item_err);
 //			console.log("receive button 1  clicked ");		
-		}else{
+		}
+		else if(($doc.wType == 'REPAIR')|| ($userpriv == 1)){ //
+	
+		//$("#rec_err").hide();
+		$("#recRemarks").css('diplay','none');
+		$("#rec_err").text("");			
+		$item_err = 0; 
+		for(var c=0; c<$item_count; c++){
+		//	console.log("Received quantity"+ rec_qty[c]);
+		var	$h = Number($("input[name='item["+c+"][qty]'").val());
+		var	$g = Number($("input[name='item["+c+"][recqty]'").val());
+		var	$j = $("input[name='item["+c+"][recvnqty]'").val();
+		var	$i = $("input[name='item["+c+"][id]'").val();
+		var $k = Number(rec_qty[c]);
+			if($g<0){
+		   $("#rec_err").text("Received can't be a negative number Item "+(c+1)+" ");
+				$item_error=0;
+				return true;
+			}
+		$g=$g+$k;
+		//console.log("receive qty" + ($g + $k));
+					if($g<0){
+		   $("#rec_err").text("Received can't be a negative number Item "+(c+1)+" ");
+				return true;
+			}
+				if($g>$h)	{
+					$("#rec_err").text("Received can't be greater than sent on Item "+(c+1)+" ");
+					return true;
+							}
+							else if($g<$h){
+								$item_err=$item_err+1;	
+							//console.log("Quantity received less"+ $g+" counter "+c +" Item error"+$item_err);	
+								}
+							else if($g === $h){ 
+							$item_err=$item_err-1;
+							console.log("Quantity received equal"+ $g+" counter "+c +" Item error"+$item_err);
+											}
+		                    } 		
+		if($item_err>0){
+			
+			if($('#recRemarks').is(':visible')){
+			console.log("did u run this");
+			if($("#recRemText").val()==""){
+			console.log("Remarks cannot be empty");	
+			$("#rec_err").text("Remarks cannot be empty");
+			$("#rec_err").show();
+			}
+			else{
+				//$("#rec_err").hide();
+				$("#rec_err").text("");
+				recLoan();
+		}
+	}
+	else{
+		$("#recRemarks").show();}	 
+		}
+		else if($item_err<0){
+			
+				recLoan();
+		} 
+//		console.log("receive button clicked "+$item_err);
+//			console.log("receive button 1  clicked ");		
+		}		
+		else{
 			if(($doc.receiveStatus=='RETURNED')||$doc.ackcnt>19){
 												//if waybill returned to allow sender close waybill
 												// do final receive command
@@ -632,6 +711,47 @@ $("body").on("click",'.btn_itemshow', function(){
 			});
 
 	$("body").on("click", "#rec_btn2", function(){
+		
+		 $item_stat = 'RETURNING';
+		$.each($itemsdata, function(d, item){
+				var	$rec = Number($("input[name='item["+d+"][recqty]'").val());
+				var $h = Number($("input[name='item["+d+"][qty]'").val());
+				var $recqty = $rec + Number(rec_qty[d]);
+				var	$id = $("input[name='item["+d+"][id]'").val();
+//				console.log("Quantity received "+ $g+" counter "+d +" Item error"+$item_err);
+			console.log("item id "+$id+" Receive quatity "+ $recqty );
+//				console.log("Doc id "+$doc_id+" Item Status "+ $item_stat );
+			
+			$.ajax({
+					type: 'GET',
+					url: "/waybill/recitem",
+					dataType: 'JSON',
+					beforeSend: function(xhr)
+					{xhr.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'))},
+					data: {
+					"doc_id": $doc_id,
+					"recqty": $recqty,
+					"currRec": $rec,
+					"item_id": $id,
+					"item_stat": $item_stat,
+					"userid": $userid,
+					"remText": $("#recRemText").val()
+					},                                                                                             
+					error: function( xhr ){ 
+					// alert("ERROR ON SUBMIT");
+//					console.log("error on submit"+xhr);
+					},
+					success: function( data ){ 
+
+					//data response can contain what we want here...
+//					console.log("Item saved "+data+"fully");
+					}
+				});
+			
+	
+			console.log(item);
+		});
+		
 		console.log("Return Submitted");
 		$printType=$("#printType").find(":selected").val();
 		console.log("Print type "+$printType);

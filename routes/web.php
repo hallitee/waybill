@@ -26,47 +26,8 @@ use App\Jobs\SendDailyReport;
 */
 
 Route::get('waybill/globalreport', function(){
-$lastMonth = date("Y-m-d H:i:s",strtotime("-1 month"));
-$today = date('Y-m-d');
-$users = [];
-$user = [];
-$indx;
-$u=[];
-$v=[];
-$row = [];
-$col = [];
-$k = [];
-$j = [];
-$l = [];
-$docs = doc::whereBetween('sentDate',[$lastMonth, $today])->get();
-foreach($docs as $d){
-if(in_array($d->user_id, $users)){
-
-}
-else{
 	
-array_push($users, $d->user_id);
-$p = User::where('id', $d->user_id)->first();
-array_push($user, $p);
-}
-}
-$locs = ['ESRNL IKOYI', 'NPRNL IKOYI', 'PFNL IKOYI', 'ESRNL AGBARA', 'NPRNL AGBARA', 'PFNL AGBARA', 'EUROMEGA', 'PARKVIEW', 'AGBARA ESTATE', 'VENDOR']
-foreach($user as $m){
-for($x=0;$x<9;$x++){
-foreach($locs as $loc){
-	if($x==0){
-	$y = doc::where('sentBy', $m)->where('sentTo', 'LIKE', $loc)->whereBetween('sentDate', [$lastMonth, $today])->count();
-	}
-	if($x==1){
-	$y = doc::where('sentBy', $m)->whereBetween('sentDate', [$lastMonth, $today])->where('receiveStatus', 'CLOSED')->count();
-	}	
-		array_push($row, $y);
-}
-		array_push($col, $u)
-		$u = [];
-}
-}
-	return view('report.mreport')->with(['user'=>$user]);
+	return view('report.mreport');
 });
 Route::get('waybill/email', function(){
 $today = '2017-11-28';
@@ -228,21 +189,17 @@ Route::get('waybill/load', function(Request $request){
 	
 	if ($loc!=''){
 		if($wType=='LOAN'){
-	$data = doc::where('wType', $wType)->where(function ($q){
-	$q->where('receiveStatus', 'OPEN')->orWhere('receiveStatus', 'RECEIVED')->orWhere('receiveStatus', 'RETURNED');})->where(function($g) use ($loc){
-		$g->where('sentTo',$loc)->orWhere('sentFrom',$loc);})->orderby('sentDate', 'DESC')->get();	
+	$data = doc::where('wType', $wType)->where(function($g) use ($loc){
+		$g->where('sentTo',$loc)->orWhere('sentFrom',$loc);})->whereIn('receiveStatus', ['OPEN','RECEIVED','RETURNED'])->orderby('sentDate', 'DESC')->get();	
 		}else{
-	$data = doc::where('wType', $wType)->where(function ($q){
-	$q->where('receiveStatus', 'OPEN')->orWhere('receiveStatus', 'RECEIVED')->orWhere('receiveStatus', 'RETURNED');})->where(function($g) use ($loc){
+	$data = doc::where('wType', $wType)->whereIn('receiveStatus', ['OPEN', 'RECEIVED','RETURNED'])->where(function($g) use ($loc){
 		$g->where('sentTo',$loc);})->orderby('sentDate', 'DESC')->get();				
 		}
 	}
 	else{$data = [];}
 	if($id!=''){
-	$data = doc::where('wType',$wType)->where('id', $id)->where(function ($q){
-	$q->where('receiveStatus', 'OPEN')->orWhere('receiveStatus', 'RECEIVED');})->orderby('sentDate', 'DESC')->get();
+	$data = doc::where('wType',$wType)->where('id', $id)->whereIn('receiveStatus', ['OPEN','RECEIVED', 'RETURNED'])->orderby('sentDate', 'DESC')->get();
 	}
-	
     return Response::json($data);
 	//return View::make('waybill.receive')->with('data',$data,'return',$wType);
 });
@@ -275,7 +232,11 @@ Route::get('waybill/recitem', function(Request $request){
 	//$wType = strtoupper($request->wType);
 	if ($item_id!=''){
 	$f = item::where('id', $item_id)->first();	
+	if($item_stat == 'RETURNING'){
+	$f->retqty = $currRec;
+	}else{
 	$f->recqty = $recqty;
+	}
 	$f->save();
 	$user_id = Auth::user()->id;
 	echo "Doc id ".$doc_id." User id ".$userid;
